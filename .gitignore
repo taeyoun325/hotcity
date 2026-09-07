@@ -1,2 +1,6 @@
 # Claude Code local session state (scheduled task locks etc.)
 .claude/
+
+# Application forms with real participant PII (names, birthdates) -- this
+# repo is public. Keep these local only.
+*.hwpx

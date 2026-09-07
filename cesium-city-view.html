@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>쿨시티 그리드 — 실제 도시 3D 뷰</title>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+  html, body, #cesiumContainer {
+    width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    font-family: "Malgun Gothic", system-ui, sans-serif;
+  }
+  #cityPanel {
+    position: absolute; top: 12px; left: 12px; z-index: 10;
+    background: rgba(15, 22, 20, 0.85); border-radius: 8px; padding: 14px 16px;
+    color: #e7ede9; box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    max-width: 300px;
+  }
+  #cityPanel h1 { font-size: 15px; margin: 0 0 10px; font-weight: 600; }
+  #cityStats {
+    margin-top: 10px; font-size: 12px; line-height: 1.6; color: #a9b7b0;
+    border-top: 1px solid #2a3733; padding-top: 8px; display: none;
+  }
+  #cityStats b { color: #57cdaf; }
+  #cityStats .src { color: #6c7a73; font-size: 10.5px; display: block; margin-top: 4px; }
+  #loadNote {
+    position: absolute; bottom: 10px; left: 12px; z-index: 10; font-size: 11px;
+    color: #8a9990; background: rgba(15,22,20,.7); padding: 4px 8px; border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<div id="cesiumContainer"></div>
+<div id="cityPanel">
+  <h1>쿨시티 그리드 · 실제 도시 3D</h1>
+  <div id="cityStats"></div>
+</div>
+<div id="loadNote">건물 데이터: Cesium OSM Buildings (OpenStreetMap)</div>
+
+<script>
+  // Cesium ion access token — scoped to assets:read + geocode only.
+  // This project's repo is public; Cesium tokens are designed to ship in
+  // client-side code (see Cesium ion docs), so this is the intended use.
+  Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImZqMllZa0FnSG1jT01rVmwiLCJqdGkiOiJlMmUyOWQ4MS04YWZhLTQ0YTEtOTRiZi00ZjJjZDNlOGUwNGMiLCJpZCI6NDgyODA5LCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODg4MDA3NjR9.AUT-ZViF3wBaROx8HpcmOdimx2C6DLshqRmRg1cglZE';
+
+  // One representative point per city (city center / dense district). Only
+  // ACTIVE_CITY is loaded right now -- switching cities was re-streaming a
+  // whole new OSM Buildings region every click, which is exactly the load
+  // time we're trying to get rid of. The rest stay here, unused, so the
+  // multi-city view is a one-line change to bring back once this single
+  // view is solid and we're ready to pay that reload cost again.
+  var ACTIVE_CITY = 'seoul';
+  var CITIES = {
+    seoul: {
+      label: "서울 · 강남역",
+      lon: 127.0276, lat: 37.4979,
+      stats: "인구밀도 15,551명/㎢ · 녹지율 38.6% · 2024년 열대야 39일·폭염 27일",
+      source: "KOSIS 국가통계포털 / 기상청 「2024년 여름철 기후특성」"
+    },
+    busan: {
+      label: "부산 · 해운대",
+      lon: 129.1604, lat: 35.1587,
+      stats: "인구밀도 4,278명/㎢ · 녹지율 57.8% · 2024년 열대야 평년 대비 최다",
+      source: "KOSIS 국가통계포털 / 부산지방기상청"
+    },
+    jeju: {
+      label: "제주 · 제주시청",
+      lon: 126.5312, lat: 33.4996,
+      stats: "인구밀도 약 366명/㎢ · 녹지율 82.6% · 2024년 열대야 56일·폭염 35일(전국 1위)",
+      source: "제주특별자치도 인구통계 / 기상청"
+    },
+    tokyo: {
+      label: "도쿄 · 신주쿠",
+      lon: 139.6917, lat: 35.6896,
+      stats: "인구밀도 약 15,742명/㎢(23구 기준)",
+      source: "도쿄도 통계(2024) — 녹지율·폭염일수 조사 중"
+    },
+    singapore: {
+      label: "싱가포르 · 마리나베이",
+      lon: 103.8607, lat: 1.2836,
+      stats: "인구밀도 8,207명/㎢(2024) · 녹지 비율 34%",
+      source: "Statista(2024) / HUGSI.green — 폭염일수 조사 중"
+    },
+    phoenix: {
+      label: "피닉스 · 다운타운",
+      lon: -112.0740, lat: 33.4484,
+      stats: "2024년 43℃(110°F) 이상 70일 · 38℃(100°F) 이상 113일 연속(역대 최고)",
+      source: "AZFamily / KJZZ(2024) — 녹지율·인구밀도 조사 중"
+    }
+  };
+
+  // No streamed world terrain -- flat ellipsoid ground. Buildings are the
+  // point of this view, and terrain tiles were a big share of the initial
+  // load time for no visual payoff at this zoom level.
+  var viewer = new Cesium.Viewer('cesiumContainer', {
+    baseLayerPicker: false,
+    timeline: false,
+    animation: false,
+    geocoder: false,
+    sceneModePicker: false,
+    homeButton: false,
+    navigationHelpButton: false
+  });
+
+  var c = CITIES[ACTIVE_CITY];
+  var center = Cesium.Cartesian3.fromDegrees(c.lon, c.lat, 0);
+
+  // Everything outside a 100m x 100m box around `center` is clipped away --
+  // not just uninteresting, but actually erased -- on both the buildings
+  // tileset and the bare globe/imagery beneath it. Four horizontal planes
+  // in a local east-north-up frame at `center`; unbounded in height so full
+  // building height still shows inside the box.
+  var HALF = 50; // metres
+  function boxClippingPlanes() {
+    return new Cesium.ClippingPlaneCollection({
+      modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(center),
+      unionClippingRegions: false, // keep only where ALL planes keep -> intersection = the box
+      edgeWidth: 1.0,
+      edgeColor: Cesium.Color.fromCssColorString('#57cdaf'),
+      planes: [
+        new Cesium.ClippingPlane(new Cesium.Cartesian3(-1, 0, 0), HALF), // keep x <= HALF
+        new Cesium.ClippingPlane(new Cesium.Cartesian3(1, 0, 0), HALF),  // keep x >= -HALF
+        new Cesium.ClippingPlane(new Cesium.Cartesian3(0, -1, 0), HALF), // keep y <= HALF
+        new Cesium.ClippingPlane(new Cesium.Cartesian3(0, 1, 0), HALF)   // keep y >= -HALF
+      ]
+    });
+  }
+
+  viewer.scene.globe.clippingPlanes = boxClippingPlanes();
+
+  Cesium.createOsmBuildingsAsync({
+    // Coarser tiles load faster; at a 100m-wide view individual buildings
+    // are still plenty detailed. Default is 16.
+    maximumScreenSpaceError: 32
+  }).then(function (tileset) {
+    tileset.clippingPlanes = boxClippingPlanes(); // separate instance -- a
+    // ClippingPlaneCollection can only be attached to one owner at a time
+    viewer.scene.primitives.add(tileset);
+  }).catch(function (err) {
+    console.error("OSM Buildings load failed:", err);
+  });
+
+  // Half-diagonal of the same 100m x 100m box, so flyToBoundingSphere frames
+  // it regardless of camera tilt.
+  var VIEW_RADIUS = 100 * Math.SQRT2 / 2;
+
+  // Single fixed view -- set once on load (duration: 0 = snap, no flight),
+  // nothing after this re-triggers camera movement or new tile requests.
+  var sphere = new Cesium.BoundingSphere(center, VIEW_RADIUS);
+  viewer.camera.flyToBoundingSphere(sphere, {
+    offset: new Cesium.HeadingPitchRange(
+      Cesium.Math.toRadians(20),
+      Cesium.Math.toRadians(-35),
+      VIEW_RADIUS * 1.6
+    ),
+    duration: 0
+  });
+
+  var statsEl = document.getElementById('cityStats');
+  statsEl.style.display = 'block';
+  statsEl.innerHTML = '<b>' + c.label + '</b><br>' + c.stats +
+    '<span class="src">' + c.source + '</span>';
+</script>
+</body>
+</html>
