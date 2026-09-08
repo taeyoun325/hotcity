@@ -330,6 +330,10 @@
   .city-info .src{ display:block; margin-top:4px; color:var(--ink-mute); font-size:10.5px; }
   .size-note{ margin:-6px 0 12px; font-size:11px; color:var(--ink-mute); line-height:1.6; }
   .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
     font:700 12.5px "Gothic A1",sans-serif;
     border-radius:9px;
     padding:9px 14px;
@@ -995,7 +999,11 @@
   .help-again{
     background:none;
     border:none;
-    padding:0;
+    display:inline-flex;
+    align-items:center;
+    min-height:24px;
+    white-space:nowrap;
+    padding:0 2px;
     margin-left:6px;
     font-size:11.5px;
     color:var(--accent-text);
@@ -1035,6 +1043,95 @@
     cursor:pointer;
   }
   .onboarding-close:hover{ color:var(--ink); }
+
+  /* ---------- inline icons (Lucide, ISC) ---------- */
+  .ico{
+    width:15px; height:15px;
+    flex:0 0 auto;
+    stroke-width:2;
+    vertical-align:-2px;
+  }
+  .iso-btn .ico{ width:16px; height:16px; }
+
+  /* 격자 행 래퍼: role="row" 를 실제 레이아웃 행으로 쓴다 */
+  .cell-row{ display:grid; gap:2px; min-height:0; min-width:0; }
+
+  /* ---------- page navigation (기능별 페이지 분리) ---------- */
+  .pagenav{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:5px;
+    position:sticky; top:8px; z-index:30;
+  }
+  .pagenav-tabs{ display:flex; gap:6px; flex-wrap:wrap; }
+  .pagetab{
+    flex:1 1 158px;
+    display:flex; flex-direction:column; gap:3px;
+    align-items:flex-start; text-align:left;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--ink-dim);
+    border-radius:9px;
+    padding:9px 11px;
+    cursor:pointer;
+    font-family:inherit;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .pagetab:hover{ color:var(--ink); background:var(--panel); }
+  .pagetab[aria-selected="true"]{
+    background:var(--panel);
+    border-color:var(--line);
+    color:var(--ink);
+    box-shadow:var(--shadow);
+  }
+  .pagetab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .pt-num{ font:700 9.5px/1 "IBM Plex Mono", monospace; letter-spacing:.14em; color:var(--ink-mute); }
+  .pagetab[aria-selected="true"] .pt-num{ color:var(--accent); }
+  .pt-label{ font:800 13.5px "Gothic A1",sans-serif; line-height:1.2; }
+  .pt-sub{ font-size:11px; line-height:1.35; color:var(--ink-mute); }
+  @media (max-width:640px){
+    .pt-sub{ display:none; }
+    .pagetab{ flex:1 1 96px; }
+  }
+
+  .page{ display:none; }
+  .page.active{ display:block; animation:pageIn .18s ease-out; }
+  @keyframes pageIn{ from{ opacity:0; transform:translateY(5px); } to{ opacity:1; transform:none; } }
+
+  .statbar{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:13px 16px 2px;
+  }
+  .statbar-title{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:10px; margin-bottom:11px;
+    font:800 13px "Gothic A1",sans-serif;
+  }
+  .statbar-title span{ font-weight:600; font-size:11.5px; color:var(--ink-mute); }
+  .statbar .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:13px; }
+  @media (max-width:640px){
+    .statbar .stats{ grid-template-columns:1fr 1fr; }
+    .statbar-title span{ display:none; }
+  }
+
+  .canvas-slot{ min-width:0; display:flex; flex-direction:column; }
+  .page-guide{ margin:0 0 13px; font-size:12.5px; line-height:1.75; color:var(--ink-dim); }
+  .page-guide b{ color:var(--ink); }
+  .page-steps{ margin:0 0 13px; padding-left:18px; font-size:12.5px; line-height:1.8; color:var(--ink-dim); }
+  .page-steps b{ color:var(--ink); }
+  .pagenext{ display:flex; justify-content:flex-end; margin-top:15px; }
+  .page-lab-next{ margin-top:16px; }
+  .report-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(330px,1fr));
+    gap:18px;
+    align-items:start;
+  }
+  .ai-run .btn{ width:100%; }
 </style>
 
 <div class="app">
@@ -1048,23 +1145,57 @@
     <span class="subject-tag">2026 공동탐구 전국대회 · 주제6 열섬현상(자유)</span>
   </header>
 
+  <nav class="pagenav" aria-label="단계별 페이지 이동">
+    <div class="pagenav-tabs" role="tablist" aria-label="단계별 페이지 이동">
+      <button class="pagetab" id="ptab-design" data-page="design" role="tab" aria-selected="true" aria-controls="page-design"><span class="pt-num">STEP 1</span><span class="pt-label">도시 설계</span><span class="pt-sub">그리기 · 프리셋 · 3D</span></button>
+      <button class="pagetab" id="ptab-env" data-page="env" role="tab" aria-selected="false" aria-controls="page-env"><span class="pt-num">STEP 2</span><span class="pt-label">환경 조건</span><span class="pt-sub">시간·바람·습도 · 실측 보정</span></button>
+      <button class="pagetab" id="ptab-ai" data-page="ai" role="tab" aria-selected="false" aria-controls="page-ai"><span class="pt-num">STEP 3</span><span class="pt-label">AI 설계</span><span class="pt-sub">최적화 · 예산 종합 설계</span></button>
+      <button class="pagetab" id="ptab-lab" data-page="lab" role="tab" aria-selected="false" aria-controls="page-lab"><span class="pt-num">STEP 4</span><span class="pt-label">탐구 실험실</span><span class="pt-sub">변인 통제 실험 7가지</span></button>
+      <button class="pagetab" id="ptab-report" data-page="report" role="tab" aria-selected="false" aria-controls="page-report"><span class="pt-num">STEP 5</span><span class="pt-label">보고서 · 공유</span><span class="pt-sub">PDF · CSV · 설계안 A/B/C</span></button>
+    </div>
+  </nav>
+
+  <main id="pageArea">
+
+  <div class="statbar">
+    <div class="statbar-title">실시간 지표 <span>건물·도로·빈터 기준 · 어느 페이지에서나 함께 보입니다</span></div>
+    <div class="stats">
+      <div class="stat">
+        <div class="label">평균기온</div>
+        <div class="value" id="statAvg">–<small>℃</small></div>
+      </div>
+      <div class="stat">
+        <div class="label">최고기온</div>
+        <div class="value" id="statMax">–<small>℃</small></div>
+      </div>
+      <div class="stat">
+        <div class="label">최저기온</div>
+        <div class="value" id="statMin">–<small>℃</small></div>
+      </div>
+      <div class="stat">
+        <div class="label">녹지 비율</div>
+        <div class="value" id="statGreen">–<small>%</small></div>
+      </div>
+    </div>
+  </div>
+
   <div class="onboarding" id="onboarding" style="display:none;">
     <button class="onboarding-close" id="onboardingClose" aria-label="도움말 닫기">×</button>
     <strong>탐구 보고서까지 가는 길</strong>
     <ol>
-      <li><b>도시를 만듭니다.</b> 브러시로 직접 칠하거나, <b>서울·부산·제주·도쿄·싱가포르·피닉스</b> 프리셋(실제 건물 배치 반영), 또는 <b>배치도 이미지 불러오기</b>로 우리 동네 지도를 넣으세요. 동네를 세밀하게 그리려면 <b>격자 해상도</b>를 24×24로 올리면 됩니다.</li>
-      <li><b>조건을 맞춥니다.</b> 측정한 날의 <b>기준기온</b>·시간대·바람·<b>습도</b>를 넣고, 실측 온도가 있으면 <b>계수 보정</b>으로 모델을 우리 동네에 맞춥니다.</li>
-      <li><b>AI에게 맡깁니다.</b> <b>AI 최적화</b>는 녹지 칸 수를 그대로 둔 채 위치만 바꾸고, <b>AI 종합 설계</b>는 정해진 예산 안에서 어떤 대책(녹지·<b>가로수길</b>·쿨루프·차열포장)을 어디에 쓸지까지 고릅니다.</li>
-      <li><b>실험합니다.</b> 아래 <b>탐구 실험실</b>에서 변인을 하나씩만 바꿔 <b><span id="expCountHint">7</span>가지 실험</b>을 돌립니다 — <b>전체 실험 실행</b>이면 한 번에 끝납니다.</li>
-      <li><b>보고서를 뽑습니다.</b> <b>PDF 탐구 보고서 생성</b>: 표지·도시 요약·3D 조감도에 실험마다 한 페이지씩, 마지막에 종합 결론과 이 모델의 한계까지 들어갑니다.</li>
+      <li><b>도시를 만듭니다.</b> <b>STEP 1 · 도시 설계</b> 페이지에서 브러시로 직접 칠하거나, <b>서울·부산·제주·도쿄·싱가포르·피닉스</b> 프리셋(실제 건물 배치 반영), 또는 <b>배치도 이미지 불러오기</b>로 우리 동네 지도를 넣으세요. 동네를 세밀하게 그리려면 <b>격자 해상도</b>를 24×24로 올리면 됩니다.</li>
+      <li><b>조건을 맞춥니다.</b> <b>STEP 2 · 환경 조건</b> 페이지에서 측정한 날의 <b>기준기온</b>·시간대·바람·<b>습도</b>를 넣고, 실측 온도가 있으면 <b>계수 보정</b>으로 모델을 우리 동네에 맞춥니다.</li>
+      <li><b>AI에게 맡깁니다.</b> <b>STEP 3 · AI 설계</b> 페이지에서 <b>AI 최적화</b>는 녹지 칸 수를 그대로 둔 채 위치만 바꾸고, <b>AI 종합 설계</b>는 정해진 예산 안에서 어떤 대책(녹지·<b>가로수길</b>·쿨루프·차열포장)을 어디에 쓸지까지 고릅니다.</li>
+      <li><b>실험합니다.</b> <b>STEP 4 · 탐구 실험실</b> 페이지에서 변인을 하나씩만 바꿔 <b><span id="expCountHint">7</span>가지 실험</b>을 돌립니다 — <b>전체 실험 실행</b>이면 한 번에 끝납니다.</li>
+      <li><b>보고서를 뽑습니다.</b> <b>STEP 5 · 보고서 · 공유</b> 페이지의 <b>PDF 탐구 보고서 생성</b>: 표지·도시 요약·3D 조감도에 실험마다 한 페이지씩, 마지막에 종합 결론과 이 모델의 한계까지 들어갑니다.</li>
     </ol>
-    <p class="onboarding-aside">알아두면 좋은 것 — 같은 <b>시드</b>면 결과가 그대로 재현되고, <b>설계안 A/B/C</b>로 우리 안을 나란히 비교하고, <b>공유 코드</b> 한 줄로 팀원에게 설계를 넘길 수 있습니다. <b>3D 조감도</b>는 끌어서 이동하고 휠로 확대해 골목까지 들여다볼 수 있어요. 마우스 없이도 됩니다: 격자에서 방향키로 이동, 스페이스로 칠하기, <b>숫자키 1~<span id="brushCountHint">7</span></b>로 브러시 전환, Ctrl+Z로 되돌리기.</p>
+    <p class="onboarding-aside">알아두면 좋은 것 — 위쪽 <b>단계 탭</b>으로 언제든 오갈 수 있고(방향키 ←→ 도 됩니다), 도시 지도는 STEP 1~3 페이지를 따라다닙니다. 같은 <b>시드</b>면 결과가 그대로 재현되고, <b>설계안 A/B/C</b>로 우리 안을 나란히 비교하고, <b>공유 코드</b> 한 줄로 팀원에게 설계를 넘길 수 있습니다. <b>3D 조감도</b>는 끌어서 이동하고 휠로 확대해 골목까지 들여다볼 수 있어요. 마우스 없이도 됩니다: 격자에서 방향키로 이동, 스페이스로 칠하기, <b>숫자키 1~<span id="brushCountHint">7</span></b>로 브러시 전환, Ctrl+Z로 되돌리기.</p>
   </div>
 
-  <div class="board">
-
-    <!-- LEFT: canvas -->
-    <section class="panel">
+  <div class="page active" id="page-design" role="tabpanel" aria-labelledby="ptab-design">
+    <div class="board">
+      <div class="canvas-slot" data-canvas-slot>
+    <section class="panel" id="canvasModule">
       <div class="panel-title">
         <h2>도시 설계 캔버스</h2>
         <span class="hint" id="canvasHint">클릭 후 드래그, 또는 방향키+스페이스</span>
@@ -1089,9 +1220,8 @@
         <button class="btn" id="btnRandom">무작위 도시 생성</button>
         <button class="btn" id="btnImport">배치도 이미지 불러오기</button>
         <button class="btn" id="btnClear">모두 지우기</button>
-        <button class="btn" id="btnUndo" title="되돌리기 (Ctrl+Z)" disabled>↩ 되돌리기</button>
-        <button class="btn" id="btnRedo" title="다시 실행 (Ctrl+Shift+Z)" disabled>↪ 다시 실행</button>
-        <button class="btn btn-primary" id="btnOptimize">AI 최적화 실행 →</button>
+        <button class="btn" id="btnUndo" title="되돌리기 (Ctrl+Z)" disabled><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>되돌리기</button>
+        <button class="btn" id="btnRedo" title="다시 실행 (Ctrl+Shift+Z)" disabled><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>다시 실행</button>
         <input type="file" id="imageInput" accept="image/*" aria-label="배치도 이미지 파일 선택" style="display:none">
       </div>
       <p class="import-note" id="importNote" style="display:none;"></p>
@@ -1142,8 +1272,8 @@
           <div class="iso-stage">
             <canvas id="isoCanvas" aria-label="도시 조감도 3D 렌더링, 건물 높이와 색은 각각 건물 규모와 예상 온도를 나타냄"></canvas>
             <div class="iso-controls">
-              <button class="iso-btn" id="isoRotateLeft" title="왼쪽으로 회전">↺</button>
-              <button class="iso-btn" id="isoRotateRight" title="오른쪽으로 회전">↻</button>
+              <button class="iso-btn" id="isoRotateLeft" title="왼쪽으로 회전" aria-label="왼쪽으로 회전"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+              <button class="iso-btn" id="isoRotateRight" title="오른쪽으로 회전" aria-label="오른쪽으로 회전"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
               <button class="iso-btn" id="isoZoomOut" title="축소">−</button>
               <span class="iso-zoom" id="isoZoomLabel">100%</span>
               <button class="iso-btn" id="isoZoomIn" title="확대">+</button>
@@ -1172,33 +1302,35 @@
         </label>
       </div>
     </section>
-
-    <!-- RIGHT: control rail -->
-    <aside class="panel">
-      <div class="panel-title">
-        <h2>실시간 지표</h2>
-        <span class="hint">건물·도로·빈터 기준</span>
       </div>
-
-      <div class="stats">
-        <div class="stat">
-          <div class="label">평균기온</div>
-          <div class="value" id="statAvg">–<small>℃</small></div>
+      <aside class="panel">
+        <div class="panel-title">
+          <h2>1단계 · 도시 만들기</h2>
+          <span class="hint">여기서 시작하세요</span>
         </div>
-        <div class="stat">
-          <div class="label">최고기온</div>
-          <div class="value" id="statMax">–<small>℃</small></div>
-        </div>
-        <div class="stat">
-          <div class="label">최저기온</div>
-          <div class="value" id="statMin">–<small>℃</small></div>
-        </div>
-        <div class="stat">
-          <div class="label">녹지 비율</div>
-          <div class="value" id="statGreen">–<small>%</small></div>
-        </div>
+        <ol class="page-steps">
+          <li><b>브러시로 직접 칠하거나</b> 프리셋 여섯 도시를 눌러 보세요. 실제 건물 배치가 들어갑니다.</li>
+          <li>우리 동네를 그리려면 <b>배치도 이미지 불러오기</b>로 지도 캡처를 넣고, <b>격자 해상도</b>를 24×24로 올리면 됩니다.</li>
+          <li>다 그렸으면 <b>3D 도시 생성</b>으로 골목까지 들여다보세요 — 끌어서 이동, 휠로 확대됩니다.</li>
+        </ol>
+        <p class="page-guide">마우스 없이도 됩니다: 격자에서 방향키로 이동, 스페이스로 칠하기, 숫자키 1~<span id="brushCountHint2">7</span>로 브러시 전환, Ctrl+Z로 되돌리기.</p>
+      <div class="budget-note">
+        현재 <b id="parkCount">0</b>칸의 공원·녹지가 있습니다. AI 최적화는 이 칸 수(녹지 예산)를 그대로 둔 채, <b>배치 위치만</b> 바꿔서 평균기온을 낮출 방법을 탐색합니다.
       </div>
+        <div class="pagenext"><button class="btn btn-primary" data-goto="env">다음: 환경 조건 맞추기 →</button></div>
+      </aside>
+    </div>
+  </div>
 
+  <div class="page" id="page-env" role="tabpanel" aria-labelledby="ptab-env">
+    <div class="board">
+      <div class="canvas-slot" data-canvas-slot></div>
+      <aside class="panel">
+        <div class="panel-title">
+          <h2>2단계 · 환경 조건과 보정</h2>
+          <span class="hint">측정한 날에 맞추기</span>
+        </div>
+        <p class="page-guide">왼쪽 지도는 여기서 바꾼 조건을 <b>바로 반영</b>합니다. 실측한 날의 기준기온·시간대·바람·습도를 넣고, 온도를 재 왔다면 아래에서 계수를 우리 동네에 맞추세요.</p>
       <div class="env-panel">
         <div class="env-row">
           <span class="env-label">시간대 <b id="hourLabel">오후 2시</b></span>
@@ -1236,7 +1368,53 @@
         <p class="env-note">기준기온은 그날 <b>그늘이나 잔디밭에서 잰 배경 기온</b>입니다. 실측한 날의 값을 넣으면 지도의 절대 온도가 측정값과 같은 눈금이 되어 비교·보정이 쉬워집니다. 재질 사이의 온도차는 기준기온과 무관합니다.</p>
         <p class="env-note">낮 시간대는 태양열로 열섬이 심해지고, 밤에는 완화됩니다. 바람은 ① 상풍(upwind) 쪽 칸의 열을 하풍 쪽으로 더 강하게 옮기고, ② 도시 전체의 열을 주변 공기로 더 빨리 실어 나가 열섬 자체를 약하게 만듭니다.</p>
       </div>
+      <details class="science">
+        <summary>시뮬레이션에 쓰인 가정 보기</summary>
+        <div class="coef-table" id="coefTable">
+          <div class="coef-row"><span>건물(고밀 구조물)</span><span id="coefBuilding">기준 대비 +5.5℃</span></div>
+          <div class="coef-row"><span>도로(아스팔트)</span><span id="coefRoad">기준 대비 +7.0℃</span></div>
+          <div class="coef-row"><span>쿨루프(고반사 지붕)</span><span id="coefCoolroof">기준 대비 +2.5℃</span></div>
+          <div class="coef-row"><span>차열포장 도로</span><span id="coefCoolpave">기준 대비 +4.0℃</span></div>
+          <div class="coef-row"><span>가로수길(그늘·증산)</span><span id="coefTreeroad">기준 대비 +3.0℃</span></div>
+          <div class="coef-row"><span>빈터(나지)</span><span id="coefGrass">기준 대비 −1.0℃</span></div>
+          <div class="coef-row"><span>공원·녹지(증발산)</span><span id="coefPark">기준 대비 −3.5℃</span></div>
+          <div class="coef-row"><span>물(하천·수역)</span><span id="coefWater">기준 대비 −5.5℃</span></div>
+        </div>
+        <p class="science-note">각 칸의 온도는 지표 재질별 열원값을 격자 확산(diffusion) 방식으로 10회 반복 계산해 이웃 칸과 열이 섞이는 효과를 근사한 값입니다. 모델에 들어간 가정은 일곱 가지입니다. <b>① 시간대</b>: 태양열 세기를 0.25배(야간)~1.2배(오후 1~2시 정점)로 스케일링합니다. <b>② 바람의 이류</b>: 상풍 쪽 이웃 칸에 가중치를 더 줘 하풍 방향으로 열이 더 강하게 퍼집니다. <b>③ 열린 경계</b>: 격자 바깥은 <b>기준기온</b>(위 환경 설정에서 지정, 기본 24℃)의 주변 공기로 보고 가장자리 칸이 그 공기와 열을 주고받습니다. 이 모델의 열은 이웃으로 1~2칸까지만 눈에 띄게 퍼지므로, 경계 효과도 가장 바깥 한두 줄이 약 0.1~0.7℃ 낮아지는 정도로 나타납니다(같은 이유로 공원 한 칸의 냉각 효과도 바로 옆 1~2칸까지입니다). <b>④ 환기 효과</b>: 바람이 셀수록 지표에서 공기로 열이 빠져나가는 속도가 빨라져 열섬 세기 자체가 최대 35%까지 줄어듭니다. <b>⑤ 저감 대책 재질</b>: 쿨루프는 지붕 반사율(알베도)을 높여 흡수하는 태양복사를 줄인 지붕, 차열포장은 표면 처리로 축열을 줄인 도로, <b>가로수길</b>은 도로를 그대로 둔 채 그 위에 수관(樹冠)을 덮은 길을 뜻합니다(열원값 +3.0℃). 가로수길은 <b>땅을 차지하지 않는다</b>는 점에서 공원과 다르고, 수관이 실제 높이를 가지므로 위 ⑥의 그늘 계산을 통해 <b>옆 칸까지 그늘을 드리웁니다</b> — 가로수가 효과를 내는 주된 이유입니다. 각각 원래 재질(건물 +5.5℃, 도로 +7.0℃)의 열원값을 <b>+2.5℃·+4.0℃</b>로 낮춰 잡았는데, 이는 문헌상 보고되는 표면온도 저감 폭을 이 모델의 상대 눈금으로 옮긴 <b>가정치</b>이지 인용 가능한 실측 계수가 아닙니다. 실측 보정 시에는 원래 재질(건물·도로)의 보정 배율을 그대로 따라갑니다. <b>⑥ 건물 높이</b>: 높이는 서로 반대 방향으로 작용하는 두 가지 효과로 열 계산에 들어갑니다. <b>낮에는 그늘</b> — 태양 쪽에 더 높은 건물이 있으면 직달 일사를 가려 그 칸의 태양 성분을 최대 45%까지 깎습니다(해가 낮을수록 그림자가 길어집니다). <b>밤에는 캐니언 효과</b> — 같은 높이가 하늘을 가려(하늘시계지수 SVF↓) 낮 동안 데워진 열이 빠져나가지 못하고 건물 사이에서 되반사됩니다. 그래서 빽빽한 블록은 한낮엔 트인 곳보다 시원하고 <b>새벽엔 더 덥습니다</b> — 실제 열섬의 일주기 모양입니다. <b>⑦ 습도와 증발산</b>: 공원·물·빈터·가로수길의 냉각은 상당 부분 <b>증발산</b>이고, 이 부분만 상대습도에 따라 달라집니다(건물·도로·쿨루프·차열포장은 영향 없음). 공기가 눅눅하면 증발이 잘 일어나지 않아 <b>녹지 대책의 효과가 줄어듭니다</b>. 건조도에 정비례하지는 않게 잡았는데, 토양 수분과 가용 에너지가 증발산의 상한이기 때문입니다. 위 계수들은 모두 <b>상대습도 70%</b>(우리나라 여름 오후에 가까운 값) 기준으로 적은 값입니다. 실제 실외 실측값이 아니라 배치 전략을 비교하기 위한 상대적 모델이며, 아래 보정 기능으로 실제 측정 데이터와 맞춰볼 수 있습니다.</p>
+      </details>
+      <details class="science" id="calibPanel">
+        <summary>실측 온도로 계수 보정하기</summary>
+        <p class="science-note" style="margin-top:8px;">먼저 위 <b>기준기온</b>에 그날 그늘에서 잰 배경 기온을 넣어주세요 — 절대 눈금이 맞아야 아래 보정이 재질 사이의 차이에 집중할 수 있습니다. 그다음 현장에서 재질별로 몇 지점씩 온도를 재고 평균을 낸 값을 넣어주세요(예: 아스팔트 3곳 평균). 비워두면 그 재질은 보정하지 않습니다. 최소 2개 재질 이상 입력하는 걸 추천해요.</p>
+        <div class="calib-grid">
+          <label>건물 실측 평균(℃) <input type="number" step="0.1" id="calibBuilding" placeholder="예: 32.4"></label>
+          <label>도로 실측 평균(℃) <input type="number" step="0.1" id="calibRoad" placeholder="예: 34.1"></label>
+          <label>공원 실측 평균(℃) <input type="number" step="0.1" id="calibPark" placeholder="예: 28.7"></label>
+          <label>물 실측 평균(℃) <input type="number" step="0.1" id="calibWater" placeholder="예: 27.9"></label>
+        </div>
+        <div class="calib-holdout">
+          <label>빈터 실측 평균(℃) <span class="holdout-tag">검증용</span> <input type="number" step="0.1" id="calibGrass" placeholder="예: 30.2"></label>
+          <p class="science-note" style="margin-top:6px;">이 값은 <b>보정에 쓰지 않습니다</b>. 위 네 재질로 계수를 맞춘 뒤, 그 계수가 <b>맞추는 데 쓰지 않은</b> 빈터의 온도를 얼마나 잘 예측하는지로 모델을 검증합니다.</p>
+        </div>
+        <button class="btn btn-primary" id="btnCalibrate" style="width:100%; margin-top:10px;">보정 실행</button>
+        <div id="calibResult" class="calib-result" style="display:none;"></div>
+      </details>
+        <div class="pagenext"><button class="btn btn-primary" data-goto="ai">다음: AI에게 맡기기 →</button></div>
+      </aside>
+    </div>
+  </div>
 
+  <div class="page" id="page-ai" role="tabpanel" aria-labelledby="ptab-ai">
+    <div class="board">
+      <div class="canvas-slot" data-canvas-slot></div>
+      <aside class="panel">
+        <div class="panel-title">
+          <h2>3단계 · AI 설계</h2>
+          <span class="hint">배치 최적화 · 예산 배분</span>
+        </div>
+        <p class="page-guide"><b>AI 최적화</b>는 녹지 칸 수를 그대로 둔 채 위치만 바꿉니다. <b>AI 종합 설계</b>는 정해진 예산 안에서 어떤 대책을 어디에 쓸지까지 고릅니다. 결과는 왼쪽 지도에 바로 그려집니다.</p>
+        <div class="ai-run">
+          <button class="btn btn-primary" id="btnOptimize">AI 최적화 실행 →</button>
+        </div>
       <div class="planner">
         <div class="planner-head">
           <b>AI 종합 설계</b>
@@ -1248,11 +1426,6 @@
         <button class="btn btn-primary" id="btnPlan" style="width:100%;">AI 종합 설계 실행 →</button>
         <div id="plannerResult" style="display:none;"></div>
       </div>
-
-      <div class="budget-note">
-        현재 <b id="parkCount">0</b>칸의 공원·녹지가 있습니다. AI 최적화는 이 칸 수(녹지 예산)를 그대로 둔 채, <b>배치 위치만</b> 바꿔서 평균기온을 낮출 방법을 탐색합니다.
-      </div>
-
       <div class="chart-wrap">
         <div class="chart-caption">
           <span>최적화 진행: 평균기온 변화</span>
@@ -1274,102 +1447,18 @@
         <div class="compare-panel" id="comparePanel" style="display:none;">
           <img id="compareImg" alt="최적화 전/후 비교 이미지" width="100%">
           <div class="save-row">
-            <button class="btn save-btn" id="btnSaveCompare">💾 이미지 저장</button>
+            <button class="btn save-btn" id="btnSaveCompare"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>이미지 저장</button>
             <span class="save-status" id="saveCompareStatus"></span>
           </div>
           <p class="compare-hint">저장 버튼이 안 되면 이미지를 우클릭 → "이미지를 다른 이름으로 저장"하세요.</p>
         </div>
       </div>
-
-      <details class="science">
-        <summary>시뮬레이션에 쓰인 가정 보기</summary>
-        <div class="coef-table" id="coefTable">
-          <div class="coef-row"><span>건물(고밀 구조물)</span><span id="coefBuilding">기준 대비 +5.5℃</span></div>
-          <div class="coef-row"><span>도로(아스팔트)</span><span id="coefRoad">기준 대비 +7.0℃</span></div>
-          <div class="coef-row"><span>쿨루프(고반사 지붕)</span><span id="coefCoolroof">기준 대비 +2.5℃</span></div>
-          <div class="coef-row"><span>차열포장 도로</span><span id="coefCoolpave">기준 대비 +4.0℃</span></div>
-          <div class="coef-row"><span>가로수길(그늘·증산)</span><span id="coefTreeroad">기준 대비 +3.0℃</span></div>
-          <div class="coef-row"><span>빈터(나지)</span><span id="coefGrass">기준 대비 −1.0℃</span></div>
-          <div class="coef-row"><span>공원·녹지(증발산)</span><span id="coefPark">기준 대비 −3.5℃</span></div>
-          <div class="coef-row"><span>물(하천·수역)</span><span id="coefWater">기준 대비 −5.5℃</span></div>
-        </div>
-        <p class="science-note">각 칸의 온도는 지표 재질별 열원값을 격자 확산(diffusion) 방식으로 10회 반복 계산해 이웃 칸과 열이 섞이는 효과를 근사한 값입니다. 모델에 들어간 가정은 일곱 가지입니다. <b>① 시간대</b>: 태양열 세기를 0.25배(야간)~1.2배(오후 1~2시 정점)로 스케일링합니다. <b>② 바람의 이류</b>: 상풍 쪽 이웃 칸에 가중치를 더 줘 하풍 방향으로 열이 더 강하게 퍼집니다. <b>③ 열린 경계</b>: 격자 바깥은 <b>기준기온</b>(위 환경 설정에서 지정, 기본 24℃)의 주변 공기로 보고 가장자리 칸이 그 공기와 열을 주고받습니다. 이 모델의 열은 이웃으로 1~2칸까지만 눈에 띄게 퍼지므로, 경계 효과도 가장 바깥 한두 줄이 약 0.1~0.7℃ 낮아지는 정도로 나타납니다(같은 이유로 공원 한 칸의 냉각 효과도 바로 옆 1~2칸까지입니다). <b>④ 환기 효과</b>: 바람이 셀수록 지표에서 공기로 열이 빠져나가는 속도가 빨라져 열섬 세기 자체가 최대 35%까지 줄어듭니다. <b>⑤ 저감 대책 재질</b>: 쿨루프는 지붕 반사율(알베도)을 높여 흡수하는 태양복사를 줄인 지붕, 차열포장은 표면 처리로 축열을 줄인 도로, <b>가로수길</b>은 도로를 그대로 둔 채 그 위에 수관(樹冠)을 덮은 길을 뜻합니다(열원값 +3.0℃). 가로수길은 <b>땅을 차지하지 않는다</b>는 점에서 공원과 다르고, 수관이 실제 높이를 가지므로 위 ⑥의 그늘 계산을 통해 <b>옆 칸까지 그늘을 드리웁니다</b> — 가로수가 효과를 내는 주된 이유입니다. 각각 원래 재질(건물 +5.5℃, 도로 +7.0℃)의 열원값을 <b>+2.5℃·+4.0℃</b>로 낮춰 잡았는데, 이는 문헌상 보고되는 표면온도 저감 폭을 이 모델의 상대 눈금으로 옮긴 <b>가정치</b>이지 인용 가능한 실측 계수가 아닙니다. 실측 보정 시에는 원래 재질(건물·도로)의 보정 배율을 그대로 따라갑니다. <b>⑥ 건물 높이</b>: 높이는 서로 반대 방향으로 작용하는 두 가지 효과로 열 계산에 들어갑니다. <b>낮에는 그늘</b> — 태양 쪽에 더 높은 건물이 있으면 직달 일사를 가려 그 칸의 태양 성분을 최대 45%까지 깎습니다(해가 낮을수록 그림자가 길어집니다). <b>밤에는 캐니언 효과</b> — 같은 높이가 하늘을 가려(하늘시계지수 SVF↓) 낮 동안 데워진 열이 빠져나가지 못하고 건물 사이에서 되반사됩니다. 그래서 빽빽한 블록은 한낮엔 트인 곳보다 시원하고 <b>새벽엔 더 덥습니다</b> — 실제 열섬의 일주기 모양입니다. <b>⑦ 습도와 증발산</b>: 공원·물·빈터·가로수길의 냉각은 상당 부분 <b>증발산</b>이고, 이 부분만 상대습도에 따라 달라집니다(건물·도로·쿨루프·차열포장은 영향 없음). 공기가 눅눅하면 증발이 잘 일어나지 않아 <b>녹지 대책의 효과가 줄어듭니다</b>. 건조도에 정비례하지는 않게 잡았는데, 토양 수분과 가용 에너지가 증발산의 상한이기 때문입니다. 위 계수들은 모두 <b>상대습도 70%</b>(우리나라 여름 오후에 가까운 값) 기준으로 적은 값입니다. 실제 실외 실측값이 아니라 배치 전략을 비교하기 위한 상대적 모델이며, 아래 보정 기능으로 실제 측정 데이터와 맞춰볼 수 있습니다.</p>
-      </details>
-
-      <details class="science" id="calibPanel">
-        <summary>실측 온도로 계수 보정하기</summary>
-        <p class="science-note" style="margin-top:8px;">먼저 위 <b>기준기온</b>에 그날 그늘에서 잰 배경 기온을 넣어주세요 — 절대 눈금이 맞아야 아래 보정이 재질 사이의 차이에 집중할 수 있습니다. 그다음 현장에서 재질별로 몇 지점씩 온도를 재고 평균을 낸 값을 넣어주세요(예: 아스팔트 3곳 평균). 비워두면 그 재질은 보정하지 않습니다. 최소 2개 재질 이상 입력하는 걸 추천해요.</p>
-        <div class="calib-grid">
-          <label>건물 실측 평균(℃) <input type="number" step="0.1" id="calibBuilding" placeholder="예: 32.4"></label>
-          <label>도로 실측 평균(℃) <input type="number" step="0.1" id="calibRoad" placeholder="예: 34.1"></label>
-          <label>공원 실측 평균(℃) <input type="number" step="0.1" id="calibPark" placeholder="예: 28.7"></label>
-          <label>물 실측 평균(℃) <input type="number" step="0.1" id="calibWater" placeholder="예: 27.9"></label>
-        </div>
-        <div class="calib-holdout">
-          <label>빈터 실측 평균(℃) <span class="holdout-tag">검증용</span> <input type="number" step="0.1" id="calibGrass" placeholder="예: 30.2"></label>
-          <p class="science-note" style="margin-top:6px;">이 값은 <b>보정에 쓰지 않습니다</b>. 위 네 재질로 계수를 맞춘 뒤, 그 계수가 <b>맞추는 데 쓰지 않은</b> 빈터의 온도를 얼마나 잘 예측하는지로 모델을 검증합니다.</p>
-        </div>
-        <button class="btn btn-primary" id="btnCalibrate" style="width:100%; margin-top:10px;">보정 실행</button>
-        <div id="calibResult" class="calib-result" style="display:none;"></div>
-      </details>
-
-      <details class="science" id="scenarioPanel">
-        <summary>설계안 저장·비교 (A / B / C)</summary>
-        <p class="science-note" style="margin-top:8px;">지금 캔버스 상태를 슬롯에 저장해 두고 다른 설계안과 지표를 나란히 비교합니다. 예: <b>A</b> 우리 동네 현재 모습 · <b>B</b> 녹지 확대안 · <b>C</b> 쿨루프·차열포장 적용안.</p>
-        <div class="slot-row" id="slotRow"></div>
-        <div class="slot-compare" id="slotCompare"></div>
-      </details>
-
-      <details class="science" id="sharePanel">
-        <summary>설계 공유 코드 (다른 기기 · 팀원과 주고받기)</summary>
-        <p class="science-note" style="margin-top:8px;">저장된 작업은 이 브라우저에만 남습니다. 지금 설계를 <b>글자 한 줄</b>로 바꿔 팀원에게 보내면, 격자 배치는 물론 시간대·바람·기준기온·보정한 계수까지 그대로 재현됩니다.</p>
-        <div class="share-row">
-          <button class="btn" id="btnShareMake">코드 만들기</button>
-        </div>
-        <textarea id="shareOut" class="lab-csv" rows="3" readonly style="display:none;" aria-label="생성된 설계 공유 코드"></textarea>
-        <div class="share-row" style="margin-top:10px;">
-          <input type="text" id="shareIn" class="share-in" placeholder="받은 코드를 여기에 붙여넣기 (CCG-…)" aria-label="설계 공유 코드 붙여넣기">
-          <button class="btn" id="btnShareApply">불러오기</button>
-        </div>
-        <span class="save-status" id="shareStatus"></span>
-      </details>
-
-      <div class="summary-block">
-        <button class="btn" id="btnSummaryCard" style="width:100%;">📄 탐구 요약 카드 만들기</button>
-        <p class="summary-hint">지금까지의 도시 통계·보정 상태·최적화 결과를 결과보고서에 붙여넣기 좋은 이미지 한 장으로 정리합니다.</p>
-        <div class="compare-panel" id="summaryPanel" style="display:none;">
-          <img id="summaryImg" alt="탐구 요약 카드" width="100%">
-          <div class="save-row">
-            <button class="btn save-btn" id="btnSaveSummary">💾 이미지 저장</button>
-            <span class="save-status" id="saveSummaryStatus"></span>
-          </div>
-          <p class="compare-hint">저장 버튼이 안 되면 이미지를 우클릭 → "이미지를 다른 이름으로 저장"하세요.</p>
-        </div>
-
-        <button class="btn" id="btnGridCsv" style="width:100%; margin-top:10px;">🧾 격자 원자료 CSV 내보내기</button>
-        <p class="summary-hint"><span id="gridCsvCount">324</span>개 칸의 재질과 예상 온도를 표로 저장합니다. 엑셀에서 직접 평균·표준편차를 내거나 그래프를 그릴 때 쓰세요.</p>
-        <div class="save-row"><span class="save-status" id="saveGridCsvStatus"></span></div>
-        <div id="csvFallback" style="display:none;">
-          <textarea id="csvFallbackText" class="lab-csv" readonly rows="7" aria-label="격자 원자료 CSV"></textarea>
-          <p class="compare-hint">자동 저장이 안 돼서 원자료를 여기에 펼쳤습니다. 전체 선택 후 복사해 엑셀에 붙여넣으세요.</p>
-        </div>
-
-        <button class="btn btn-primary" id="btnPdfReport" style="width:100%; margin-top:10px;">📑 PDF 탐구 보고서 생성</button>
-        <p class="summary-hint">표지·도시 요약·3D 조감도에 더해, 실행해 둔 <b>변인 통제 실험마다 한 페이지씩</b>(그래프·실험 방법·결과 해석·측정 자료)과 <b>종합 결론·모델의 한계</b> 페이지를 붙여 PDF로 만듭니다.</p>
-        <div id="pdfPanel" style="display:none;">
-          <div class="save-row">
-            <button class="btn save-btn" id="btnSavePdf">💾 PDF 저장</button>
-            <span class="save-status" id="savePdfStatus"></span>
-          </div>
-          <iframe id="pdfFrame" class="pdf-frame" title="탐구 보고서 PDF 미리보기"></iframe>
-          <p class="compare-hint">저장 버튼이 안 되면 아래 링크로 새 탭에서 열고, 브라우저의 저장/인쇄 버튼을 사용하세요.<br>
-            <a id="pdfOpenLink" href="#" target="_blank" rel="noopener">↗ 새 탭에서 PDF 열기</a>
-          </p>
-        </div>
-      </div>
-    </aside>
+        <div class="pagenext"><button class="btn btn-primary" data-goto="lab">다음: 변인 통제 실험 →</button></div>
+      </aside>
+    </div>
   </div>
 
+  <div class="page" id="page-lab" role="tabpanel" aria-labelledby="ptab-lab">
   <!-- EXPERIMENT LAB: controlled-variable sweeps -->
   <section class="panel lab" id="labPanel">
     <div class="panel-title">
@@ -1414,8 +1503,8 @@
         </div>
         <div class="lab-conclusion" id="labConclusion" style="display:none;"></div>
         <div class="lab-exports" id="labExports" style="display:none;">
-          <button class="btn" id="btnExpCsv">📊 CSV 내보내기</button>
-          <button class="btn" id="btnExpPng">🖼 그래프 이미지</button>
+          <button class="btn" id="btnExpCsv"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg>CSV 내보내기</button>
+          <button class="btn" id="btnExpPng"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>그래프 이미지</button>
         </div>
         <div class="compare-panel" id="labExportPanel" style="display:none;">
           <img id="labExportImg" alt="실험 결과 그래프 이미지" width="100%">
@@ -1431,6 +1520,79 @@
       <span class="save-status" id="labCopyStatus"></span>
     </details>
   </section>
+    <div class="pagenext page-lab-next"><button class="btn btn-primary" data-goto="report">다음: 보고서 뽑기 →</button></div>
+  </div>
+
+  <div class="page" id="page-report" role="tabpanel" aria-labelledby="ptab-report">
+    <div class="report-grid">
+      <section class="panel">
+        <div class="panel-title">
+          <h2>5단계 · 보고서 · 원자료 내보내기</h2>
+          <span class="hint">결과보고서에 바로 붙이기</span>
+        </div>
+        <div class="summary-block">
+          <button class="btn" id="btnSummaryCard" style="width:100%;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="10" cy="13" r="1.6"/><path d="m20 17-1.1-1.1a2 2 0 0 0-2.8 0L10 22"/></svg>탐구 요약 카드 만들기</button>
+          <p class="summary-hint">지금까지의 도시 통계·보정 상태·최적화 결과를 결과보고서에 붙여넣기 좋은 이미지 한 장으로 정리합니다.</p>
+          <div class="compare-panel" id="summaryPanel" style="display:none;">
+            <img id="summaryImg" alt="탐구 요약 카드" width="100%">
+            <div class="save-row">
+              <button class="btn save-btn" id="btnSaveSummary"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>이미지 저장</button>
+              <span class="save-status" id="saveSummaryStatus"></span>
+            </div>
+            <p class="compare-hint">저장 버튼이 안 되면 이미지를 우클릭 → "이미지를 다른 이름으로 저장"하세요.</p>
+          </div>
+
+          <button class="btn" id="btnGridCsv" style="width:100%; margin-top:10px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M12 3v18"/></svg>격자 원자료 CSV 내보내기</button>
+          <p class="summary-hint"><span id="gridCsvCount">324</span>개 칸의 재질과 예상 온도를 표로 저장합니다. 엑셀에서 직접 평균·표준편차를 내거나 그래프를 그릴 때 쓰세요.</p>
+          <div class="save-row"><span class="save-status" id="saveGridCsvStatus"></span></div>
+          <div id="csvFallback" style="display:none;">
+            <textarea id="csvFallbackText" class="lab-csv" readonly rows="7" aria-label="격자 원자료 CSV"></textarea>
+            <p class="compare-hint">자동 저장이 안 돼서 원자료를 여기에 펼쳤습니다. 전체 선택 후 복사해 엑셀에 붙여넣으세요.</p>
+          </div>
+
+          <button class="btn btn-primary" id="btnPdfReport" style="width:100%; margin-top:10px;"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>PDF 탐구 보고서 생성</button>
+          <p class="summary-hint">표지·도시 요약·3D 조감도에 더해, 실행해 둔 <b>변인 통제 실험마다 한 페이지씩</b>(그래프·실험 방법·결과 해석·측정 자료)과 <b>종합 결론·모델의 한계</b> 페이지를 붙여 PDF로 만듭니다.</p>
+          <div id="pdfPanel" style="display:none;">
+            <div class="save-row">
+              <button class="btn save-btn" id="btnSavePdf"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>PDF 저장</button>
+              <span class="save-status" id="savePdfStatus"></span>
+            </div>
+            <iframe id="pdfFrame" class="pdf-frame" title="탐구 보고서 PDF 미리보기"></iframe>
+            <p class="compare-hint">저장 버튼이 안 되면 아래 링크로 새 탭에서 열고, 브라우저의 저장/인쇄 버튼을 사용하세요.<br>
+              <a id="pdfOpenLink" href="#" target="_blank" rel="noopener">↗ 새 탭에서 PDF 열기</a>
+            </p>
+          </div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-title">
+          <h2>설계안 비교 · 팀원과 공유</h2>
+          <span class="hint">A / B / C · 공유 코드</span>
+        </div>
+        <details class="science" id="scenarioPanel">
+          <summary>설계안 저장·비교 (A / B / C)</summary>
+          <p class="science-note" style="margin-top:8px;">지금 캔버스 상태를 슬롯에 저장해 두고 다른 설계안과 지표를 나란히 비교합니다. 예: <b>A</b> 우리 동네 현재 모습 · <b>B</b> 녹지 확대안 · <b>C</b> 쿨루프·차열포장 적용안.</p>
+          <div class="slot-row" id="slotRow"></div>
+          <div class="slot-compare" id="slotCompare"></div>
+        </details>
+        <details class="science" id="sharePanel">
+          <summary>설계 공유 코드 (다른 기기 · 팀원과 주고받기)</summary>
+          <p class="science-note" style="margin-top:8px;">저장된 작업은 이 브라우저에만 남습니다. 지금 설계를 <b>글자 한 줄</b>로 바꿔 팀원에게 보내면, 격자 배치는 물론 시간대·바람·기준기온·보정한 계수까지 그대로 재현됩니다.</p>
+          <div class="share-row">
+            <button class="btn" id="btnShareMake">코드 만들기</button>
+          </div>
+          <textarea id="shareOut" class="lab-csv" rows="3" readonly style="display:none;" aria-label="생성된 설계 공유 코드"></textarea>
+          <div class="share-row" style="margin-top:10px;">
+            <input type="text" id="shareIn" class="share-in" placeholder="받은 코드를 여기에 붙여넣기 (CCG-…)" aria-label="설계 공유 코드 붙여넣기">
+            <button class="btn" id="btnShareApply">불러오기</button>
+          </div>
+          <span class="save-status" id="shareStatus"></span>
+        </details>
+      </section>
+    </div>
+  </div>
+
+  </main>
 
   <footer class="meta"><b>AI 최적화</b>는 녹지 칸 수를 고정한 채 위치만 바꾸고, <b>AI 종합 설계</b>는 정해진 예산 안에서 대책 종류까지 고릅니다. 결과는 절대 온도가 아니라 <b>조건 사이의 상대 비교</b>로 읽어 주세요. <button class="help-again" id="btnHelpAgain">도움말 다시 보기</button></footer>
 </div>
@@ -1929,6 +2091,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     return out;
   }
 
+  // ---- vehicle (traffic) waste heat: an anthropogenic add-on, road cells only ----
+  // Unlike the material coefficients above, this isn't fit to anything -- there
+  // is no per-city measurement to calibrate against, only literature that
+  // traffic-heavy corridors run measurably warmer than quiet streets from
+  // engine and pavement-friction waste heat. TRAFFIC_MAX is this tool's own
+  // reasoned ceiling, not a cited constant, which is why it stays small next
+  // to the material coefficients (road base is 7.0) and why it is 0 unless a
+  // city preset supplies a cited vehicle density -- a freely-drawn city gets
+  // no traffic term at all, so nothing calibrated before this existed moves.
+  var REF_VEHICLE_DENSITY = 2500; // 대/㎢, ~ a busy Korean city district
+  var TRAFFIC_MAX = 0.8;          // ℃-equivalent added to road cells at/above the reference
+  var activeVehicleDensity = 0;
+  function trafficFactor(density) {
+    if (!density) return 0;
+    return TRAFFIC_MAX * Math.min(1, density / REF_VEHICLE_DENSITY);
+  }
+
   // Background ("shade") air temperature the whole map is expressed relative to.
   // Field measurements are taken on a particular day, so a team that measured a
   // 31C afternoon needs the map on that scale before their readings and the
@@ -2129,6 +2308,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var wDown = 1 + Math.max(0, -wy) * WIND_UPWIND_BOOST;
     var openness = BOUNDARY_CALM + BOUNDARY_WIND * strength;
     var ventilation = 1 - VENT_MAX * strength;
+    var vehicleDensity = (env && env.vehicleDensity != null) ? env.vehicleDensity : activeVehicleDensity;
+    var trafficAdd = trafficFactor(vehicleDensity);
 
     // per-cell source, once: material + shading relief + night-time canyon trap
     var hf = heightField(g);
@@ -2140,6 +2321,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       // shade removes SOLAR gain, so it only applies to surfaces the sun is
       // heating -- shading a park does not make the park warmer
       if (base > 0 && rays) base *= 1 - SHADE_RELIEF * shadeFactor(hf, rays, i);
+      // traffic waste heat sits on the road surface, day and night, and wind
+      // carries it away just like everything else here
+      if (trafficAdd && isoShapeOf(g[i]) === "road") base += trafficAdd * ventilation;
       // trapped long-wave is a night effect and applies to every surface; wind
       // still carries it away, hence the same ventilation factor
       srcField[i] = base + (1 - svfAt(hf, i)) * NIGHT_TRAP * night * ventilation;
@@ -2221,25 +2405,37 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   var gridEl = document.getElementById("cellGrid");
   var cellEls = [];
   function buildGridDom() {
-    gridEl.style.gridTemplateColumns = "repeat(" + SIZE + ", 1fr)";
+    // role="grid" 는 gridcell 을 row 없이 직접 담을 수 없다. 행 래퍼를 실제
+    // 레이아웃 행으로 만들어 두면(바깥 격자가 행, 안쪽 격자가 칸) 화면은 그대로면서
+    // 스크린리더에는 "3행 5열" 같은 위치가 제대로 읽힌다.
+    gridEl.style.gridTemplateColumns = "";
+    gridEl.style.gridTemplateRows = "repeat(" + SIZE + ", 1fr)";
     // the per-cell temperature label has to shrink with the cells or it spills
     gridEl.style.setProperty("--cell-font", (SIZE >= 24 ? 6 : SIZE >= 18 ? 8 : 11) + "px");
     gridEl.setAttribute("aria-label", SIZE + "×" + SIZE + " 도시 격자, 방향키로 이동하고 스페이스로 칠합니다. 셀 색은 예상 지표 온도를 나타냅니다.");
     gridEl.innerHTML = "";
     cellEls = [];
-    for (var i0 = 0; i0 < N; i0++) {
-      var c = document.createElement("div");
-      c.className = "cell";
-      c.dataset.i = i0;
-      c.setAttribute("role", "gridcell");
-      // roving tabindex: exactly one cell is in the tab order at a time, so Tab
-      // steps past the whole grid instead of through every cell
-      c.tabIndex = i0 === 0 ? 0 : -1;
-      var val = document.createElement("span");
-      val.className = "val";
-      c.appendChild(val);
-      gridEl.appendChild(c);
-      cellEls.push(c);
+    for (var r0 = 0; r0 < SIZE; r0++) {
+      var row = document.createElement("div");
+      row.className = "cell-row";
+      row.setAttribute("role", "row");
+      row.style.gridTemplateColumns = "repeat(" + SIZE + ", 1fr)";
+      for (var x0 = 0; x0 < SIZE; x0++) {
+        var i0 = r0 * SIZE + x0;
+        var c = document.createElement("div");
+        c.className = "cell";
+        c.dataset.i = i0;
+        c.setAttribute("role", "gridcell");
+        // roving tabindex: exactly one cell is in the tab order at a time, so Tab
+        // steps past the whole grid instead of through every cell
+        c.tabIndex = i0 === 0 ? 0 : -1;
+        var val = document.createElement("span");
+        val.className = "val";
+        c.appendChild(val);
+        row.appendChild(c);
+        cellEls.push(c);
+      }
+      gridEl.appendChild(row);
     }
   }
   buildGridDom();
@@ -5792,6 +5988,7 @@ REAL_GRIDS.phoenix = {
   // "1~5" survived two brushes being added and told students to press keys
   // that did nothing
   document.getElementById("brushCountHint").textContent = String(BRUSH_KEYS.length);
+  document.getElementById("brushCountHint2").textContent = String(BRUSH_KEYS.length);
   document.getElementById("expCountHint").textContent = String(LAB_ORDER.length);
   document.getElementById("btnRunAllExp").title =
     LAB_ORDER.length + "가지 실험을 차례로 모두 실행합니다. PDF 보고서에 실험 페이지가 모두 실립니다.";
@@ -6450,5 +6647,66 @@ REAL_GRIDS.phoenix = {
   refreshScenarioUI();
   updateSizeButtons();
   updateIsoViewUi();
+
+  // 스크린리더가 한국어 발음으로 읽도록 문서 언어를 지정한다. 아티팩트로
+  // 발행하면 <html> 태그를 플랫폼이 만들어 주기 때문에 파일에는 적을 수 없다.
+  if (!document.documentElement.lang) document.documentElement.lang = "ko";
+
+  // ---- 페이지 라우터: 기능을 다섯 단계로 나눠 보여준다 ----
+  // 도시 캔버스는 지우고 다시 만들지 않고, 캔버스가 필요한 페이지의 슬롯으로
+  // DOM 노드를 그대로 옮긴다. 그래야 격자 셀에 붙은 이벤트와 편집 이력이
+  // 페이지를 옮겨 다녀도 그대로 살아 있다.
+  var PAGE_KEY = "coolcitygrid_page_v1";
+  var PAGES = ["design", "env", "ai", "lab", "report"];
+  var pageTabs = Array.prototype.slice.call(document.querySelectorAll(".pagetab"));
+  var canvasModule = document.getElementById("canvasModule");
+  var currentPage = null;
+
+  function showPage(name, silent) {
+    if (PAGES.indexOf(name) < 0) name = "design";
+    if (name === currentPage) return;
+    currentPage = name;
+    PAGES.forEach(function(p){
+      var el = document.getElementById("page-" + p);
+      if (el) el.classList.toggle("active", p === name);
+    });
+    pageTabs.forEach(function(t){
+      t.setAttribute("aria-selected", t.dataset.page === name ? "true" : "false");
+    });
+    var host = document.getElementById("page-" + name);
+    var slot = host ? host.querySelector("[data-canvas-slot]") : null;
+    if (slot && canvasModule.parentNode !== slot) {
+      slot.appendChild(canvasModule);
+      // 캔버스 엘리먼트를 옮기면 브라우저에 따라 비트맵이 비므로 다시 그린다
+      drawIso();
+    }
+    if (name === "lab") renderLabChart();
+    try { localStorage.setItem(PAGE_KEY, name); } catch (e) {}
+    if (!silent) window.scrollTo({ top: 0, behavior: REDUCED_MOTION ? "auto" : "smooth" });
+  }
+
+  pageTabs.forEach(function(t){
+    t.addEventListener("click", function(){ showPage(t.dataset.page); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-goto]"), function(b){
+    b.addEventListener("click", function(){ showPage(b.dataset.goto); });
+  });
+  document.querySelector(".pagenav").addEventListener("keydown", function(e){
+    var i = pageTabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    var d = e.key === "ArrowRight" ? 1 : (e.key === "ArrowLeft" ? -1 : 0);
+    if (!d) return;
+    e.preventDefault();
+    var next = pageTabs[(i + d + pageTabs.length) % pageTabs.length];
+    next.focus();
+    showPage(next.dataset.page);
+  });
+
+  var startPage = "design";
+  try {
+    var savedPage = localStorage.getItem(PAGE_KEY);
+    if (savedPage && PAGES.indexOf(savedPage) >= 0) startPage = savedPage;
+  } catch (e) {}
+  showPage(startPage, true);
 })();
 </script>
